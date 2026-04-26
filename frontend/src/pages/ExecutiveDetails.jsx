@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../lib/api";
-import { ArrowLeft, Phone, Calendar, Trash2, Plus, Edit2, BookOpen, Printer, Receipt } from "lucide-react";
+import { 
+    ArrowLeft, Phone, Calendar, Trash2, Plus, Edit2, BookOpen, Printer, Receipt, 
+    User, MapPin, Key, X, Menu, Wallet, Heart, TrendingUp, History 
+} from "lucide-react";
+
 import { toast } from "react-hot-toast";
 import { format } from "date-fns";
 import ReportForm from "../components/ReportForm";
