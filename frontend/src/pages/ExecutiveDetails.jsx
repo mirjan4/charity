@@ -16,13 +16,14 @@ import PaymentVoucher from "../components/PaymentVoucher";
 /**
  * Normalizes record data for printing components
  */
-const getPrintData = (record, type) => {
+const getPrintData = (record, executive, type) => {
     // Handle both snake_case and camelCase relation names
     const usages = record.book_usages || record.bookUsages || [];
     
     if (type === 'bill') {
         return {
             ...record,
+            executive, // Attach executive profile
             book_details: usages.map(bu => ({
                 book_number: bu.receipt_book?.book_number || bu.receiptBook?.book_number,
                 receipt_start: bu.start_page,
@@ -40,6 +41,7 @@ const getPrintData = (record, type) => {
     }
     return {
         ...record,
+        executive, // Attach executive profile
         book_details: usages.map(bu => ({
             book_number: bu.receipt_book?.book_number || bu.receiptBook?.book_number,
             start_page: bu.start_page,
@@ -49,6 +51,7 @@ const getPrintData = (record, type) => {
         })) || [],
     };
 };
+
 
 
 export default function ExecutiveDetails() {
@@ -473,14 +476,14 @@ export default function ExecutiveDetails() {
                                                 <td className="px-6 py-4 whitespace-nowrap text-center">
                                                     <div className="flex items-center justify-center gap-1">
                                                         <button
-                                                            onClick={() => setPrintingRecord(getPrintData(record, 'bill'))}
+                                                            onClick={() => setPrintingRecord(getPrintData(record, executive, 'bill'))}
                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                                                             title="Print Detailed Bill"
                                                         >
                                                             <Printer className="w-4 h-4" />
                                                         </button>
                                                         <button
-                                                            onClick={() => setPrintingVoucher(getPrintData(record, 'voucher'))}
+                                                            onClick={() => setPrintingVoucher(getPrintData(record, executive, 'voucher'))}
                                                             className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
                                                             title="Print A5 Voucher"
                                                         >
@@ -567,13 +570,13 @@ export default function ExecutiveDetails() {
                                             </div>
                                             <div className="flex items-center gap-1">
                                                 <button
-                                                    onClick={() => setPrintingRecord(getPrintData(record, 'bill'))}
+                                                    onClick={() => setPrintingRecord(getPrintData(record, executive, 'bill'))}
                                                     className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                                                 >
                                                     <Printer className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => setPrintingVoucher(getPrintData(record, 'voucher'))}
+                                                    onClick={() => setPrintingVoucher(getPrintData(record, executive, 'voucher'))}
                                                     className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
                                                 >
                                                     <Receipt className="w-4 h-4" />
