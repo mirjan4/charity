@@ -68,40 +68,23 @@ class ExecutiveController extends Controller
     {
         $executive = Executive::findOrFail($id);
         
-        // 1. PF Balance 
-        $contributions = \App\Models\MonthlyRecord::where('executive_id', $id)
-            ->selectRaw('COALESCE(SUM((actual_salary + incentive_amount - pension) - paid_salary), 0) as total')
-            ->value('total');
-
-        $withdrawals = \App\Models\PfLedger::where('executive_id', $id)
-            ->where('type', 'withdrawal')
-            ->sum('amount');
-            
-        $gratuity = \App\Models\MonthlyRecord::where('executive_id', $id)->sum('pension');
-
-        // 2. Recent Records (Simple version)
         $recentRecords = \App\Models\MonthlyRecord::where('executive_id', $id)
-            ->with(['bookUsages.receiptBook'])
             ->orderBy('record_date', 'desc')
-            ->get();
-
-        // 3. Books (Active only)
-        $activeBooks = \App\Models\ReceiptBook::where('executive_id', $id)
-            ->where('status', 'active')
             ->get();
 
         return [
             'executive' => $executive,
             'pf' => [
-                'total_savings' => (float)$contributions,
-                'balance' => (float)$contributions - (float)$withdrawals,
-                'gratuity_balance' => (float)$gratuity
+                'total_savings' => 0,
+                'balance' => 0,
+                'gratuity_balance' => 0
             ],
             'records' => $recentRecords,
-            'books' => $activeBooks,
+            'books' => [],
             'timestamp' => now()->toISOString()
         ];
     }
+
 
 
     public function update(Request $request, $id)
