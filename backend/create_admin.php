@@ -17,6 +17,7 @@ try {
     if (!$user) {
         DB::table('users')->insert([
             'name' => 'System Admin',
+            'username' => '0000000000',
             'phone' => '0000000000',
             'password' => Hash::make('admin123'),
             'role' => 'admin',
@@ -26,6 +27,7 @@ try {
         ]);
         echo "✅ Admin user created successfully via DB insert!\n";
     } else {
+
         echo "ℹ️ Admin user already exists.\n";
     }
 } catch (\Exception $e) {
