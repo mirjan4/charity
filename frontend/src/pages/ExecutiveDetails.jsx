@@ -17,18 +17,21 @@ import PaymentVoucher from "../components/PaymentVoucher";
  * Normalizes record data for printing components
  */
 const getPrintData = (record, type) => {
+    // Handle both snake_case and camelCase relation names
+    const usages = record.book_usages || record.bookUsages || [];
+    
     if (type === 'bill') {
         return {
             ...record,
-            book_details: record.book_usages?.map(bu => ({
-                book_number: bu.receipt_book?.book_number,
+            book_details: usages.map(bu => ({
+                book_number: bu.receipt_book?.book_number || bu.receiptBook?.book_number,
                 receipt_start: bu.start_page,
                 receipt_end: bu.end_page,
                 start_page: bu.start_page,
                 end_page: bu.end_page,
                 amount: bu.amount,
                 type: bu.category,
-                book_source: bu.receipt_book?.type
+                book_source: bu.receipt_book?.type || bu.receiptBook?.type
             })) || [],
             savings: record.pf,
             prev_gratuity: 0,
@@ -37,8 +40,8 @@ const getPrintData = (record, type) => {
     }
     return {
         ...record,
-        book_details: record.book_usages?.map(bu => ({
-            book_number: bu.receipt_book?.book_number,
+        book_details: usages.map(bu => ({
+            book_number: bu.receipt_book?.book_number || bu.receiptBook?.book_number,
             start_page: bu.start_page,
             end_page: bu.end_page,
             amount: bu.amount,
@@ -46,6 +49,7 @@ const getPrintData = (record, type) => {
         })) || [],
     };
 };
+
 
 export default function ExecutiveDetails() {
     const { id } = useParams();

@@ -63,26 +63,30 @@ export default function ReportForm({
     const [notes, setNotes] = useState(initialData?.notes || "");
     
     // Step 1: Book Entries State
-    const [bookEntries, setBookEntries] = useState(
-        initialData?.book_usages?.map(u => ({
+    const [bookEntries, setBookEntries] = useState(() => {
+        const usages = initialData?.book_usages || initialData?.bookUsages || [];
+        return usages.length > 0 ? usages.map(u => ({
             id: Math.random(),
-            book_id: u.receipt_book_id,
+            book_id: u.receipt_book_id || u.receiptBookId,
             category: u.category,
             start_page: u.start_page,
             end_page: u.end_page,
             amount: u.amount
-        })) || [{ id: Math.random(), book_id: "", category: "charity", start_page: "", end_page: "", amount: "" }]
-    );
- 
+        })) : [{ id: Math.random(), book_id: "", category: "charity", start_page: "", end_page: "", amount: "" }];
+    });
+
     // Step 2: Calculation State
     const [isGratuityManualSet, setIsGratuityManualSet] = useState(false);
-    const [gratuityMode, setGratuityMode] = useState(initialData?.pension_mode || "manual");
+    const [gratuityMode, setGratuityMode] = useState(initialData?.pension_mode || initialData?.pensionMode || "manual");
     const [gratuityValue, setGratuityValue] = useState(
-        initialData?.pension_mode === "rate" ? initialData.pension_rate : (initialData?.pension_manual !== undefined ? initialData.pension_manual : "")
+        (initialData?.pension_mode === "rate" || initialData?.pensionMode === "rate")
+            ? (initialData.pension_rate ?? initialData.pensionRate)
+            : (initialData?.pension_manual ?? initialData?.pensionManual ?? "")
     );
-    const [allowanceMode, setAllowanceMode] = useState(initialData?.allowance_mode || "default");
-    const [allowanceRate, setAllowanceRate] = useState(initialData?.allowance_rate || "10");
-    const [allowanceManual, setAllowanceManual] = useState(initialData?.allowance_manual || "0");
+    const [allowanceMode, setAllowanceMode] = useState(initialData?.allowance_mode || initialData?.allowanceMode || "default");
+    const [allowanceRate, setAllowanceRate] = useState(initialData?.allowance_rate || initialData?.allowanceRate || "10");
+    const [allowanceManual, setAllowanceManual] = useState(initialData?.allowance_manual || initialData?.allowanceManual || "0");
+
  
     // Box Incentive State
     const [boxAmount, setBoxAmount] = useState(initialData?.box_count || 0);
