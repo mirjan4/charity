@@ -1,13 +1,13 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://127.0.0.1:8000/api',
-    withCredentials: true,
+    baseURL: 'https://charity-kj0m.onrender.com/api',
     headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
     }
 });
+
 
 // Request interceptor to add token and start timer
 api.interceptors.request.use((config) => {
