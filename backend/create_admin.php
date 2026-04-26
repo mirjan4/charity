@@ -28,6 +28,14 @@ try {
     }
 
 
+    echo "Checking user roles...\n";
+    $userCols = DB::select('SHOW COLUMNS FROM users');
+    $userColNames = array_map(function($c) { return $c->Field; }, $userCols);
+    if (!in_array('role', $userColNames)) {
+        DB::statement("ALTER TABLE users ADD COLUMN role VARCHAR(20) DEFAULT 'executive' AFTER password");
+        echo "✅ Added missing column: role\n";
+    }
+
     echo "Creating guaranteed admin user...\n";
     DB::table('users')->where('username', 'admin')->delete();
 
@@ -41,9 +49,14 @@ try {
         'created_at' => now(),
         'updated_at' => now()
     ]);
+    
+    // Safety check: force update any existing admin
+    DB::table('users')->where('username', 'admin')->update(['role' => 'admin']);
+    
+    echo "✅ GUARANTEED Admin user created and role verified!\n";
+
     echo "✅ GUARANTEED Admin user created successfully!\n";
 
 } catch (\Exception $e) {
     echo "❌ Error creating admin: " . $e->getMessage() . "\n";
 }
-
