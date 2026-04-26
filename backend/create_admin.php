@@ -11,25 +11,21 @@ try {
     $app = require_once __DIR__.'/bootstrap/app.php';
     $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
-    echo "Checking for admin user...\n";
-    $user = DB::table('users')->where('role', 'admin')->first();
+    echo "Creating guaranteed admin user...\n";
+    DB::table('users')->where('username', 'admin')->delete();
 
-    if (!$user) {
-        DB::table('users')->insert([
-            'name' => 'System Admin',
-            'username' => '0000000000',
-            'phone' => '0000000000',
-            'password' => Hash::make('admin123'),
-            'role' => 'admin',
-            'active' => 1,
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
-        echo "✅ Admin user created successfully via DB insert!\n";
-    } else {
+    DB::table('users')->insert([
+        'name' => 'System Admin',
+        'username' => 'admin',
+        'phone' => '0000000000',
+        'password' => Hash::make('1234'),
+        'role' => 'admin',
+        'active' => 1,
+        'created_at' => now(),
+        'updated_at' => now()
+    ]);
+    echo "✅ GUARANTEED Admin user created successfully!\n";
 
-        echo "ℹ️ Admin user already exists.\n";
-    }
 } catch (\Exception $e) {
     echo "❌ Error creating admin: " . $e->getMessage() . "\n";
 }

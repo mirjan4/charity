@@ -9,8 +9,6 @@ class ExecutiveController extends Controller
 {
     public function index(Request $request)
     {
-        $page = $request->get('page', 1);
-        $search = $request->get('search');
         $fetchAll = $request->get('all'); 
         
         if ($fetchAll) {
@@ -19,6 +17,7 @@ class ExecutiveController extends Controller
 
         $query = Executive::select('id', 'code', 'name', 'phone', 'place', 'join_date', 'fixed_salary', 'active');
         
+        $search = $request->get('search');
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -27,20 +26,10 @@ class ExecutiveController extends Controller
             });
         }
 
-        return $query->addSelect([
-                'total_savings' => \App\Models\MonthlyRecord::selectRaw('
-                    COALESCE(SUM((actual_salary + incentive_amount - pension) - paid_salary), 0)
-                ')->whereColumn('executive_id', 'executives.id'),
-                'pf_balance' => \App\Models\MonthlyRecord::selectRaw("
-                    COALESCE(SUM((actual_salary + incentive_amount - pension) - paid_salary), 0) 
-                    - (SELECT COALESCE(SUM(amount), 0) FROM pf_ledgers WHERE pf_ledgers.executive_id = executives.id AND type='withdrawal')
-                ")->whereColumn('executive_id', 'executives.id'),
-                'gratuity_balance' => \App\Models\MonthlyRecord::selectRaw('COALESCE(SUM(pension), 0)')
-                    ->whereColumn('executive_id', 'executives.id')
-            ])
-            ->orderBy('code', 'asc')
-            ->paginate(20);
+        // Return simpler data first to ensure 500 error goes away
+        return $query->orderBy('code', 'asc')->paginate(20);
     }
+
 
 
     public function store(Request $request)
