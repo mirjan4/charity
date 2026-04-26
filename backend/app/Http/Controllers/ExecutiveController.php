@@ -11,42 +11,37 @@ class ExecutiveController extends Controller
     {
         $page = $request->get('page', 1);
         $search = $request->get('search');
-        $fetchAll = $request->get('all'); // NEW: support for fetching all for dropdowns
+        $fetchAll = $request->get('all'); 
         
         if ($fetchAll) {
-            return \Illuminate\Support\Facades\Cache::remember("execs_all_dropdown", 600, function() {
-                return Executive::select('id', 'name', 'code')->orderBy('name', 'asc')->get();
+            return Executive::select('id', 'name', 'code')->orderBy('name', 'asc')->get();
+        }
+
+        $query = Executive::select('id', 'code', 'name', 'phone', 'place', 'join_date', 'fixed_salary', 'active');
+        
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('code', 'like', "%{$search}%")
+                  ->orWhere('place', 'like', "%{$search}%");
             });
         }
 
-        $cacheKey = "execs_p{$page}_s" . md5($search);
-        
-        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($search) {
-            $query = Executive::select('id', 'code', 'name', 'phone', 'place', 'join_date', 'fixed_salary', 'active');
-            
-            if ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('code', 'like', "%{$search}%")
-                      ->orWhere('place', 'like', "%{$search}%");
-                });
-            }
-
-            return $query->addSelect([
-                    'total_savings' => \App\Models\MonthlyRecord::selectRaw('
-                        COALESCE(SUM((actual_salary + incentive_amount - pension) - paid_salary), 0)
-                    ')->whereColumn('executive_id', 'executives.id'),
-                    'pf_balance' => \App\Models\MonthlyRecord::selectRaw('
-                        COALESCE(SUM((actual_salary + incentive_amount - pension) - paid_salary), 0) 
-                        - (SELECT COALESCE(SUM(amount), 0) FROM pf_ledgers WHERE pf_ledgers.executive_id = executives.id AND type="withdrawal")
-                    ')->whereColumn('executive_id', 'executives.id'),
-                    'gratuity_balance' => \App\Models\MonthlyRecord::selectRaw('COALESCE(SUM(pension), 0)')
-                        ->whereColumn('executive_id', 'executives.id')
-                ])
-                ->orderBy('code', 'asc')
-                ->paginate(20);
-        });
+        return $query->addSelect([
+                'total_savings' => \App\Models\MonthlyRecord::selectRaw('
+                    COALESCE(SUM((actual_salary + incentive_amount - pension) - paid_salary), 0)
+                ')->whereColumn('executive_id', 'executives.id'),
+                'pf_balance' => \App\Models\MonthlyRecord::selectRaw("
+                    COALESCE(SUM((actual_salary + incentive_amount - pension) - paid_salary), 0) 
+                    - (SELECT COALESCE(SUM(amount), 0) FROM pf_ledgers WHERE pf_ledgers.executive_id = executives.id AND type='withdrawal')
+                ")->whereColumn('executive_id', 'executives.id'),
+                'gratuity_balance' => \App\Models\MonthlyRecord::selectRaw('COALESCE(SUM(pension), 0)')
+                    ->whereColumn('executive_id', 'executives.id')
+            ])
+            ->orderBy('code', 'asc')
+            ->paginate(20);
     }
+
 
     public function store(Request $request)
     {
