@@ -66,46 +66,43 @@ class ExecutiveController extends Controller
 
     public function show($id)
     {
-        $cacheKey = "exec_full_{$id}";
+        $executive = Executive::findOrFail($id);
         
-        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($id) {
-            $executive = Executive::findOrFail($id);
+        // 1. PF Balance 
+        $contributions = \App\Models\MonthlyRecord::where('executive_id', $id)
+            ->selectRaw('COALESCE(SUM((actual_salary + incentive_amount - pension) - paid_salary), 0) as total')
+            ->value('total');
+
+        $withdrawals = \App\Models\PfLedger::where('executive_id', $id)
+            ->where('type', 'withdrawal')
+            ->sum('amount');
             
-            // 1. PF Balance (Optimized direct calculation strictly tied to gross monthly records)
-            $contributions = \App\Models\MonthlyRecord::where('executive_id', $id)
-                ->selectRaw('COALESCE(SUM((actual_salary + incentive_amount - pension) - paid_salary), 0) as total')
-                ->value('total');
+        $gratuity = \App\Models\MonthlyRecord::where('executive_id', $id)->sum('pension');
 
-            $withdrawals = \App\Models\PfLedger::where('executive_id', $id)
-                ->where('type', 'withdrawal')
-                ->sum('amount');
-            $gratuity = \App\Models\MonthlyRecord::where('executive_id', $id)->sum('pension');
+        // 2. Recent Records (Simple version)
+        $recentRecords = \App\Models\MonthlyRecord::where('executive_id', $id)
+            ->with(['bookUsages.receiptBook'])
+            ->orderBy('record_date', 'desc')
+            ->get();
 
-            // 2. Recent Records (Full chronological history necessary for accurate React cumulative math loop)
-            $recentRecords = \App\Models\MonthlyRecord::where('executive_id', $id)
-                ->with(['bookUsages.receiptBook'])
-                ->withAccumulated()
-                ->orderBy('record_date', 'desc')
-                ->get();
+        // 3. Books (Active only)
+        $activeBooks = \App\Models\ReceiptBook::where('executive_id', $id)
+            ->where('status', 'active')
+            ->get();
 
-            // 3. Books (Active only)
-            $activeBooks = \App\Models\ReceiptBook::where('executive_id', $id)
-                ->where('status', 'active')
-                ->get();
-
-            return [
-                'executive' => $executive,
-                'pf' => [
-                    'total_savings' => (float)$contributions,
-                    'balance' => (float)$contributions - (float)$withdrawals,
-                    'gratuity_balance' => (float)$gratuity
-                ],
-                'records' => $recentRecords,
-                'books' => $activeBooks,
-                'timestamp' => now()->toISOString()
-            ];
-        });
+        return [
+            'executive' => $executive,
+            'pf' => [
+                'total_savings' => (float)$contributions,
+                'balance' => (float)$contributions - (float)$withdrawals,
+                'gratuity_balance' => (float)$gratuity
+            ],
+            'records' => $recentRecords,
+            'books' => $activeBooks,
+            'timestamp' => now()->toISOString()
+        ];
     }
+
 
     public function update(Request $request, $id)
     {
