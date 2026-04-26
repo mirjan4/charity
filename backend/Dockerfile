@@ -34,6 +34,7 @@ RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
 # Expose port 10000 and start php server
 EXPOSE 10000
-CMD php artisan migrate --force && php -S 0.0.0.0:10000 -t public
+CMD php artisan migrate --force; php artisan serve --host=0.0.0.0 --port=10000
+
 
 
