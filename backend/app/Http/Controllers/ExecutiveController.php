@@ -26,8 +26,16 @@ class ExecutiveController extends Controller
             });
         }
 
-        // Return simpler data first to ensure 500 error goes away
-        return $query->orderBy('code', 'asc')->paginate(20);
+        return $query->addSelect([
+                'total_savings' => \App\Models\MonthlyRecord::selectRaw('COALESCE(SUM(savings), 0)')
+                    ->whereColumn('executive_id', 'executives.id'),
+                'pf_balance' => \App\Models\MonthlyRecord::selectRaw('COALESCE(SUM(savings), 0)')
+                    ->whereColumn('executive_id', 'executives.id'),
+                'gratuity_balance' => \App\Models\MonthlyRecord::selectRaw('COALESCE(SUM(pension), 0)')
+                    ->whereColumn('executive_id', 'executives.id')
+            ])
+            ->orderBy('code', 'asc')
+            ->paginate(20);
     }
 
 
@@ -68,22 +76,41 @@ class ExecutiveController extends Controller
     {
         $executive = Executive::findOrFail($id);
         
+        // 1. Total Savings
+        $totalSavings = \App\Models\MonthlyRecord::where('executive_id', $id)->sum('savings');
+
+        // 2. Gratuity Contribution
+        $totalGratuity = \App\Models\MonthlyRecord::where('executive_id', $id)->sum('pension');
+
+        // 3. Total Withdrawals
+        $totalWithdrawals = \App\Models\PfLedger::where('executive_id', $id)
+            ->where('type', 'withdrawal')
+            ->sum('amount');
+
+        // 4. Activity Records
         $recentRecords = \App\Models\MonthlyRecord::where('executive_id', $id)
+            ->with(['bookUsages.receiptBook'])
             ->orderBy('record_date', 'desc')
+            ->get();
+
+        // 5. Active Receipt Books
+        $activeBooks = \App\Models\ReceiptBook::where('executive_id', $id)
+            ->where('status', 'active')
             ->get();
 
         return [
             'executive' => $executive,
             'pf' => [
-                'total_savings' => 0,
-                'balance' => 0,
-                'gratuity_balance' => 0
+                'total_savings' => (float)$totalSavings,
+                'balance' => (float)$totalSavings - (float)$totalWithdrawals,
+                'gratuity_balance' => (float)$totalGratuity
             ],
             'records' => $recentRecords,
-            'books' => [],
+            'books' => $activeBooks,
             'timestamp' => now()->toISOString()
         ];
     }
+
 
 
 
