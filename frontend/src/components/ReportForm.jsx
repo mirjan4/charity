@@ -58,8 +58,9 @@ export default function ReportForm({
     
     // Global State
     const [recordDate, setRecordDate] = useState(initialData?.record_date || format(new Date(), "yyyy-MM-dd"));
-    const [fixedSalary, setFixedSalary] = useState(initialData?.actual_salary || initialFixedSalary || 0);
-    const [isSalaryManual, setIsSalaryManual] = useState(initialData?.salary_mode === "manual");
+    const [fixedSalary, setFixedSalary] = useState(initialData?.fixed_salary || initialData?.fixedSalary || initialFixedSalary || 0);
+    const [isSalaryManual, setIsSalaryManual] = useState(initialData?.salary_mode === "manual" || initialData?.salaryMode === "manual");
+
     const [notes, setNotes] = useState(initialData?.notes || "");
     
     // Step 1: Book Entries State
